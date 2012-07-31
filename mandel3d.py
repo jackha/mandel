@@ -125,7 +125,7 @@ def data_to_image():
         if i % 1 == 0:
             print 'busy with focus_depth %d, data row %d of %d' % (focus_depth, i, size)
         for j in xrange(size):
-            for k in reversed(xrange(size/2,size)):  # from back to front
+            for k in reversed(xrange(focus_depth-5,focus_depth+5)):  # from back to front
                 x = i*image_size/size
                 y = j*image_size/size
                 if data[i, j, k] == max_iteration:
@@ -137,19 +137,32 @@ def data_to_image():
                     radius = min(2.0+10*float(abs(focus_depth-k)) / (size/2), gaussian_size)
             
                     distribution = equallightdist(size=gaussian_size, radius=radius)#gaussian2d(gaussian_size=gaussian_size, sigma=1)
-                    for gx in xrange(gaussian_size):
-                        for gy in xrange(gaussian_size):
-                            imx = x-gaussian_size_half+gx
-                            imy = y-gaussian_size_half+gy
-                            if (imx < image_size and
-                                imx >= 0 and
-                                imy < image_size and
-                                imy >= 0):
-                            
-                                image_data[imx, imy] += data[i,j,k] * distribution[gx, gy]
-                                if image_data[imx, imy] > max_seen:
-                                    max_seen = image_data[imx, imy]+10
-                                    print "max: %f" % max_seen
+                    xstart = x - gaussian_size_half
+                    xend = xstart + gaussian_size
+                    ystart = y - gaussian_size_half
+                    yend = ystart + gaussian_size
+                    if xstart >= 0 and ystart >= 0 and xend < image_size and yend < image_size:
+                        #print xstart, xend, ystart, yend
+                        image_data[xstart:xend, ystart:yend] += data[i,j,k] * distribution
+                        print image_data[xstart:xend, ystart:yend]
+                    else:
+                        print xstart, xend, ystart, yend
+
+                    # for gx in xrange(gaussian_size):
+                    #     for gy in xrange(gaussian_size):
+                    #         imx = x-gaussian_size_half+gx
+                    #         imy = y-gaussian_size_half+gy
+                    #         if (imx < image_size and
+                    #             imx >= 0 and
+                    #             imy < image_size and
+                    #             imy >= 0):
+
+                    #             image_data[imx, imy] += data[i,j,k] * distribution[gx, gy]
+                    #             if image_data[imx, imy] > max_seen:
+                    #                 max_seen = image_data[imx, imy]+10
+                    #                 print "max: %f" % max_seen
+
+    max_seen = image_data[imx, imy].max()
 
     print 'saving image'
     # now draw on an image
